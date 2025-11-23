@@ -29,3 +29,4 @@ void addbook_num(First* core, char*, int a);
 users* assign(char* answer);
 void booking(char * answer, char * answer2, First*core, users**user, int usernum);
 void search_u(users** user, int usernum, char * answer);
+void search_b(First* core, char* answer);

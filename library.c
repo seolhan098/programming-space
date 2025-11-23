@@ -25,7 +25,7 @@ void addbook(First* core, char* name, int a, int b, char* bgenre, int c) {
 	next->price = b;
 	strcpy(next->genre, bgenre);
 	next->page = c;
-	next->reserch = 0;
+	next->reserch = 1;
 	next->link = NULL;
 	if (core->head == NULL)
 	{
@@ -190,8 +190,86 @@ void search_u(users** user, int usernum, char* answer)
 				list = list->link;
 				count++;
 			}
+			return;
 		}
 	}
 	if (!found)
 		printf("해당 인물은 없습니다\n");
+}
+
+void search_b(First* core, char* answer)
+{
+	char choice[30];
+	info* temp;
+	int check=0;
+	temp = core->head;
+	if (temp == NULL)
+	{
+		printf("아직 도서관 내 도서가 없습니다");
+		return 0;
+	}
+	int count = 1;
+	while (temp != NULL)
+	{
+		if (temp->reserch == 1)
+		{
+			if (strcmp(temp->bname, answer) == 0 || strcmp(temp->genre, answer) == 0)
+			{
+				check = 1;
+				printf("\n[%d 번째 도서]\n", count);
+				printf("----------------------------------------\n");
+				printf(" 제목        : %s\n", temp->bname);
+				printf(" 들어온 권수 : %d 권\n", temp->many);
+				printf(" 가격        : %d 원\n", temp->price);
+				printf(" 장르        : %s\n", temp->genre);
+				printf(" 페이지 수   : %d 페이지\n", temp->page);
+				printf("----------------------------------------\n");
+				count++;
+			}
+			else
+				temp->reserch = 0;
+		}
+		temp = temp->link;
+	}
+	if (check == 0)
+	{
+		printf("해당 정보의 책은 없습니다\n");
+		return 0;
+	}
+	else
+	{
+		printf("재검색을 하시겠습니까?(예, 아니오)\n");
+		printf("> ");
+		scanf("%s", choice);
+		clearline();
+		while (1)
+		{
+			if (strcmp(choice, "예") == 0)
+			{
+				printf("세부적으로 검색할 키워드를 입력하세요\n");
+				printf("> ");
+				scanf("%s", answer);
+				clearline();
+				search_b(core, answer);
+				return 0;
+			}
+			else if (strcmp(choice, "아니오") == 0)
+			{
+				temp = core->head;
+				while (temp != NULL)
+				{
+					temp->reserch = 1;
+					temp = temp->link;
+				}
+				return 0;
+			}
+			else
+			{
+				printf("다시 입력해주세요\n");
+				printf("> ");
+				scanf("%s", choice);
+				clearline();
+			}
+		}
+	}
 }

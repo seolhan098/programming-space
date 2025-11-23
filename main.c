@@ -55,7 +55,6 @@ int main()
             scanf("%s", answer);
             clearline();
             search_u(user, usernum, answer);
-            clearline();
         }
         else if (strcmp(answer, "도서 추가") == 0)
         {
@@ -75,7 +74,11 @@ int main()
         }
         else if (strcmp(answer, "도서 검색") == 0)
         {
-
+            printf("검색할 키워드를 입력하세요\n");
+            printf("> ");
+            scanf("%s", answer);
+            clearline();
+            search_b(core, answer);
         }
         else if (strcmp(answer, "도서 정렬") == 0)
         {
