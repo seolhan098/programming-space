@@ -1,6 +1,6 @@
 typedef struct INFO
 {
-	char bname[20];
+	char bname[100];
 	int many;
 	int price;
 	char genre[20];

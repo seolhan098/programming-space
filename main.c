@@ -11,8 +11,8 @@ int main()
     printf("원하시는 기능을 입력하세요\n\n");
     printf("------------------------------------------\n> ");
 
-    char answer[50];
-    char answer2[50];
+    char answer[100];
+    char answer2[100];
     int book;
     int price;
     char genre[30];
