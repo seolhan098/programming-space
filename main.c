@@ -21,6 +21,7 @@ int main()
     users* user[30];
     int usernum = 0;
     core = initList();
+    usernum = Starting(core, user);
 
     while (1)
     {
@@ -82,7 +83,15 @@ int main()
         }
         else if (strcmp(answer, "도서 정렬") == 0)
         {
-
+            int count = sort(core);
+            if (count = 1)
+            {
+                printf("정렬을 완료했습니다\n");
+            }
+            else
+            {
+                printf("정렬을 실패했습니다\n");
+            }
         }
         else if (strcmp(answer, "도서 대출") == 0)
         {
@@ -94,7 +103,11 @@ int main()
         }
         else if (strcmp(answer, "도서 반납") == 0)
         {
-            
+            printf("빌린 책의 이름과 빌리신 분의 이름을 입력해주세요.\n");
+            printf("> ");
+            scanf("%s %s", answer, answer2);
+            returning(answer, answer2, core, user, usernum);
+            clearline();
         }
         else if (strcmp(answer, "도서 보기") == 0)
         {

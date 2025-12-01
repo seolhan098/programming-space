@@ -118,7 +118,6 @@ void booking(char* answer, char* answer2, First* core, users** user, int usernum
 	info* temp, * next;
 	users* targetUser = NULL;
 
-	// 회원 찾기
 	for (int i = 0; i < usernum; i++)
 	{
 		if (strcmp(user[i]->name, answer2) == 0)
@@ -133,16 +132,25 @@ void booking(char* answer, char* answer2, First* core, users** user, int usernum
 		return;
 	}
 
-	// 책 찾기
 	temp = core->head;
 	while (temp != NULL)
 	{
 		if (strcmp(temp->bname, answer) == 0)
 		{
+			if (temp->many <= 0)
+			{
+				printf("해당 책은 현재 모두 대출 중입니다.\n");
+				return;
+			}
+			temp->many -= 1;
+
 			next = (info*)malloc(sizeof(info));
 			strcpy(next->bname, temp->bname);
 			strcpy(next->genre, temp->genre);
 			next->page = temp->page;
+			next->many = 1;     
+			next->price = temp->price;
+			next->reserch = 1;
 			next->link = NULL;
 
 			if (targetUser->head == NULL)
@@ -158,7 +166,7 @@ void booking(char* answer, char* answer2, First* core, users** user, int usernum
 			}
 
 			printf("%s님이 %s을(를) 대출했습니다.\n", answer2, answer);
-			return; 
+			return;
 		}
 		temp = temp->link;
 	}
@@ -197,23 +205,29 @@ void search_u(users** user, int usernum, char* answer)
 		printf("해당 인물은 없습니다\n");
 }
 
-void search_b(First* core, char* answer)
+int search_b(First* core, char* answer)
 {
 	char choice[30];
 	info* temp;
-	int check=0;
+	int check = 0;
 	temp = core->head;
+
 	if (temp == NULL)
 	{
 		printf("아직 도서관 내 도서가 없습니다");
 		return 0;
 	}
+
 	int count = 1;
+
 	while (temp != NULL)
 	{
 		if (temp->reserch == 1)
 		{
-			if (strcmp(temp->bname, answer) == 0 || strcmp(temp->genre, answer) == 0)
+			char* found_title = strstr(temp->bname, answer);
+			char* found_genre = strstr(temp->genre, answer);
+
+			if (found_title != NULL || found_genre != NULL)
 			{
 				check = 1;
 				printf("\n[%d 번째 도서]\n", count);
@@ -227,49 +241,252 @@ void search_b(First* core, char* answer)
 				count++;
 			}
 			else
+			{
 				temp->reserch = 0;
+			}
 		}
+
 		temp = temp->link;
 	}
+
 	if (check == 0)
 	{
 		printf("해당 정보의 책은 없습니다\n");
 		return 0;
 	}
-	else
+
+	printf("재검색을 하시겠습니까?(예, 아니오)\n");
+	printf("> ");
+	scanf("%s", choice);
+	clearline();
+
+	while (1)
 	{
-		printf("재검색을 하시겠습니까?(예, 아니오)\n");
-		printf("> ");
-		scanf("%s", choice);
-		clearline();
-		while (1)
+		if (strcmp(choice, "예") == 0)
 		{
-			if (strcmp(choice, "예") == 0)
+			printf("세부적으로 검색할 키워드를 입력하세요\n");
+			printf("> ");
+			scanf("%s", answer);
+			clearline();
+
+			return search_b(core, answer);
+		}
+		else if (strcmp(choice, "아니오") == 0)
+		{
+			temp = core->head;
+			while (temp != NULL)
 			{
-				printf("세부적으로 검색할 키워드를 입력하세요\n");
-				printf("> ");
-				scanf("%s", answer);
-				clearline();
-				search_b(core, answer);
-				return 0;
+				temp->reserch = 1;
+				temp = temp->link;
 			}
-			else if (strcmp(choice, "아니오") == 0)
+			return 0;
+		}
+		else
+		{
+			printf("다시 입력해주세요\n> ");
+			scanf("%s", choice);
+			clearline();
+		}
+	}
+}
+
+int sort(First* core)
+{
+	if (core->head == NULL || core->head->link == NULL)
+		return 0;
+
+	info* dummy = (info*)malloc(sizeof(info));
+	dummy->link = core->head;
+
+	info* prev;
+	info* curr;
+	info* next;
+	int swapped = 1;
+
+	while (swapped)
+	{
+		swapped = 0;
+		prev = dummy;
+		curr = dummy->link;
+
+		while (curr->link != NULL)
+		{
+			next = curr->link;
+
+			if (strcmp(curr->bname, next->bname) > 0)
 			{
-				temp = core->head;
-				while (temp != NULL)
-				{
-					temp->reserch = 1;
-					temp = temp->link;
-				}
-				return 0;
+				curr->link = next->link;
+				next->link = curr;
+				prev->link = next;
+
+				swapped = 1;
+				prev = next;
 			}
 			else
 			{
-				printf("다시 입력해주세요\n");
-				printf("> ");
-				scanf("%s", choice);
-				clearline();
+				prev = curr;
+				curr = curr->link;
 			}
 		}
 	}
+
+	// 머리 교체
+	core->head = dummy->link;
+	free(dummy);
+	return 1;
+}
+
+void returning(char* bookname, char* username, First* core, users** user, int usernum)
+{
+	users* targetUser = NULL;
+
+	for (int i = 0; i < usernum; i++)
+	{
+		if (strcmp(user[i]->name, username) == 0)
+		{
+			targetUser = user[i];
+			break;
+		}
+	}
+
+	if (targetUser == NULL)
+	{
+		printf("해당 인물을 찾을 수 없습니다.\n");
+		return;
+	}
+
+	info* prev = NULL;
+	info* cur = targetUser->head;
+
+	while (cur != NULL)
+	{
+		if (strcmp(cur->bname, bookname) == 0)
+		{
+			if (prev == NULL)
+			{
+				targetUser->head = cur->link;
+			}
+			else
+			{
+				prev->link = cur->link;
+			}
+
+			free(cur);
+
+			info* lib = core->head;
+			while (lib != NULL)
+			{
+				if (strcmp(lib->bname, bookname) == 0)
+				{
+					lib->many += 1;
+					break;
+				}
+				lib = lib->link;
+			}
+
+			printf("%s님이 %s을(를) 반납했습니다.\n", username, bookname);
+			return;
+		}
+
+		prev = cur;
+		cur = cur->link;
+	}
+
+	printf("해당 회원은 이 책을 빌린 기록이 없습니다.\n");
+}
+
+int Starting(First* core, users** user)
+{
+	info* b1 = (info*)malloc(sizeof(info));
+	strcpy(b1->bname, "해리포터1");
+	strcpy(b1->genre, "판타지");
+	b1->many = 3;
+	b1->price = 15000;
+	b1->page = 350;
+	b1->reserch = 1;
+	b1->link = NULL;
+	core->head = b1;
+
+	info* b2 = (info*)malloc(sizeof(info));
+	strcpy(b2->bname, "해리포터2");
+	strcpy(b2->genre, "판타지");
+	b2->many = 2;
+	b2->price = 15000;
+	b2->page = 380;
+	b2->reserch = 1;
+	b2->link = NULL;
+	b1->link = b2;
+
+	info* b3 = (info*)malloc(sizeof(info));
+	strcpy(b3->bname, "해리포터3");
+	strcpy(b3->genre, "판타지");
+	b3->many = 4;
+	b3->price = 16000;
+	b3->page = 420;
+	b3->reserch = 1;
+	b3->link = NULL;
+	b2->link = b3;
+
+	info* b4 = (info*)malloc(sizeof(info));
+	strcpy(b4->bname, "해리포터연대기");
+	strcpy(b4->genre, "판타지");
+	b4->many = 1;
+	b4->price = 20000;
+	b4->page = 500;
+	b4->reserch = 1;
+	b4->link = NULL;
+	b3->link = b4;
+
+	info* b5 = (info*)malloc(sizeof(info));
+	strcpy(b5->bname, "해리포터마법책");
+	strcpy(b5->genre, "판타지");
+	b5->many = 5;
+	b5->price = 12000;
+	b5->page = 300;
+	b5->reserch = 1;
+	b5->link = NULL;
+	b4->link = b5;
+
+	core->length = 5;
+
+	user[0] = assign("홍석");
+	user[1] = assign("민수");
+	user[2] = assign("지훈");
+
+	info* h1 = (info*)malloc(sizeof(info));
+	*h1 = *b1;
+	h1->many = 1;
+	h1->link = NULL;
+	user[0]->head = h1;
+	b1->many--;
+
+	info* h2 = (info*)malloc(sizeof(info));
+	*h2 = *b2;
+	h2->many = 1;
+	h2->link = NULL;
+	h1->link = h2;
+	b2->many--;
+
+	info* m1 = (info*)malloc(sizeof(info));
+	*m1 = *b5;
+	m1->many = 1;
+	m1->link = NULL;
+	user[1]->head = m1;
+	b5->many--;
+
+	info* j1 = (info*)malloc(sizeof(info));
+	*j1 = *b3;
+	j1->many = 1;
+	j1->link = NULL;
+	user[2]->head = j1;
+	b3->many--;
+
+	info* j2 = (info*)malloc(sizeof(info));
+	*j2 = *b4;
+	j2->many = 1;
+	j2->link = NULL;
+	j1->link = j2;
+	b4->many--;
+
+	return 3;
 }
